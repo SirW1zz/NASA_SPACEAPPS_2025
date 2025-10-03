@@ -1,0 +1,28 @@
+{
+    "justin": {
+        "logs": [
+            {
+                "date": "2025-10-03",
+                "activity": "jogging",
+                "time": "12:23",
+                "advice_given": false
+            }
+        ],
+        "preferences": {}
+    },
+    "alice": {
+        "logs": [
+            {
+                "date": "2025-10-03",
+                "activity": "jogging",
+                "time": "18:00",
+                "advice_given": false
+            }
+        ],
+        "preferences": {}
+    },
+    "bob": {
+        "logs": [],
+        "preferences": {}
+    }
+}
