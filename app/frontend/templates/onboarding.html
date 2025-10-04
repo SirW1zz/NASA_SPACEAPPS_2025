@@ -1,0 +1,77 @@
+Limit a:
+
+**File: `app/frontend/templates/onboarding.html`**
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Rain-E</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 40px; }
+        .container { max-width: 600px; margin: 0 auto; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; }
+        h1 { text-align: center; margin-bottom: 30px; }
+        label { display: block; margin-top: 15px; font-weight: bold; }
+        input[type="text"], input[type="number"], select { width: 100%; padding: 10px; margin-top: 5px; border: none; border-radius: 5px; }
+        input[type="checkbox"] { margin-right: 10px; }
+        .checkbox-group { margin-top: 10px; }
+        button { width: 100%; padding: 15px; margin-top: 30px; background: #4CAF50; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; }
+        button:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 Health Profile Setup</h1>
+        <form method="POST">
+            <label for="name">Your Name:</label>
+            <input type="text" id="name" name="name" required>
+            
+            <h3 style="margin-top: 30px;">Health Conditions:</h3>
+            <div class="checkbox-group">
+                <input type="checkbox" id="asthma" name="asthma">
+                <label for="asthma" style="display: inline;">Asthma</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="allergies" name="allergies">
+                <label for="allergies" style="display: inline;">Allergies (pollen, dust)</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="low_bp" name="low_bp">
+                <label for="low_bp" style="display: inline;">Low Blood Pressure</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="high_bp" name="high_bp">
+                <label for="high_bp" style="display: inline;">High Blood Pressure</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="diabetes" name="diabetes">
+                <label for="diabetes" style="display: inline;">Diabetes</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="heart_condition" name="heart_condition">
+                <label for="heart_condition" style="display: inline;">Heart Condition</label>
+            </div>
+            
+            <h3 style="margin-top: 30px;">Temperature Preferences:</h3>
+            <label for="temp_min">Minimum Comfortable Temp (°C):</label>
+            <input type="number" id="temp_min" name="temp_min" value="18" min="0" max="50">
+            
+            <label for="temp_max">Maximum Comfortable Temp (°C):</label>
+            <input type="number" id="temp_max" name="temp_max" value="32" min="0" max="50">
+            
+            <label for="activity_level">Activity Level:</label>
+            <select id="activity_level" name="activity_level">
+                <option value="1">Sedentary (mostly indoors)</option>
+                <option value="2" selected>Moderately Active</option>
+                <option value="3">Very Active (athlete/outdoor job)</option>
+            </select>
+            
+            <button type="submit">Save Profile</button>
+        </form>
+    </div>
+</body>
+</html>
+```

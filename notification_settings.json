@@ -1,0 +1,6 @@
+{
+  "event_reminder_minutes": 15,
+  "morning_summary_time": "01:55",
+  "notifications_enabled": true,
+  "sound_enabled": true
+}

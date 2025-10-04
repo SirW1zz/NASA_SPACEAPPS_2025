@@ -2,14 +2,15 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from datetime import datetime, timedelta
+from typing import List, Dict
 import os.path
 import pickle
-from dotenv import load_dotenv
-import os
 
-load_dotenv() # loads variables from .env file
-
-SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+SCOPES = [
+    'https://www.googleapis.com/auth/calendar.readonly',
+    'https://www.googleapis.com/auth/tasks.readonly'
+]
 
 def get_credentials():
     creds = None
@@ -20,38 +21,55 @@ def get_credentials():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            # Build client config from environment variables
-            client_config = {
-                "web": {
-                    "client_id": os.getenv("GOOGLE_CLIENT_ID"),
-                    "project_id": os.getenv("GOOGLE_PROJECT_ID"),
-                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                    "token_uri": "https://oauth2.googleapis.com/token",
-                    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                    "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
-                    "redirect_uris": ["http://localhost:8080/"]
-                }
-            }
-            flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
-            creds = flow.run_local_server(port=8080, redirect_uri_trailing_slash=False)
+            flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+            creds = flow.run_local_server(port=0)
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
     return creds
 
-def fetch_events():
+def parse_event_datetime(event: Dict) -> datetime:
+    """
+    Extract datetime from event (handles both datetime and date formats).
+    """
+    start = event['start']
+    if 'dateTime' in start:
+        # Parse ISO format datetime
+        return datetime.fromisoformat(start['dateTime'].replace('Z', '+00:00'))
+    elif 'date' in start:
+        # All-day event - use 9 AM as default time
+        date_str = start['date']
+        return datetime.strptime(date_str, '%Y-%m-%d').replace(hour=9)
+    return datetime.utcnow()
+
+def fetch_events(days_ahead: int = 7) -> List[Dict]:
+    """
+    Fetch upcoming calendar events with location and time information.
+    """
     creds = get_credentials()
     service = build('calendar', 'v3', credentials=creds)
-    events_result = service.events().list(calendarId='primary', maxResults=10, singleEvents=True, orderBy='startTime').execute()
-    return events_result.get('items', [])
-
-if __name__ == '__main__':
-    import datetime
-    print("Fetching events...")
-    events = fetch_events()
-    if not events:
-        print('No upcoming events found.')
-    else:
-        print("Upcoming 10 events:")
-        for event in events:
-            start = event['start'].get('dateTime', event['start'].get('date'))
-            print(start, event['summary'])
+    
+    now = datetime.utcnow()
+    time_max = now + timedelta(days=days_ahead)
+    
+    events_result = service.events().list(
+        calendarId='primary',
+        timeMin=now.isoformat() + 'Z',
+        timeMax=time_max.isoformat() + 'Z',
+        maxResults=50,
+        singleEvents=True,
+        orderBy='startTime'
+    ).execute()
+    
+    events = events_result.get('items', [])
+    
+    parsed_events = []
+    for event in events:
+        parsed_event = {
+            'summary': event.get('summary', 'Untitled Event'),
+            'location': event.get('location', None),  # Address string or None
+            'datetime': parse_event_datetime(event),
+            'description': event.get('description', '')
+        }
+        parsed_events.append(parsed_event)
+    
+    return parsed_events

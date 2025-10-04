@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rain-E Weather Assistant</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { text-align: center; margin-bottom: 30px; font-size: 2.5em; }
+        .location-info { text-align: center; margin-bottom: 20px; font-size: 0.9em; opacity: 0.8; }
+        .weather-card { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 30px; margin-bottom: 20px; }
+        .current-weather { display: flex; justify-content: space-between; align-items: center; }
+        .temp { font-size: 4em; font-weight: bold; }
+        .events-section, .tasks-section { margin-top: 30px; }
+        .event-item, .task-item { background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 10px; margin-bottom: 10px; }
+        .refresh-btn { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .refresh-btn:hover { background: #45a049; }
+        .update-location-btn { background: #2196F3; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; margin-left: 10px; }
+        .update-location-btn:hover { background: #0b7dda; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌦️ Rain-E Weather Assistant</h1>
+        <p style="text-align: center; margin-bottom: 10px;">Welcome back, {{ profile.name }}!</p>
+        <div class="location-info">
+            📍 Location: {{ "%.4f"|format(location[0]) }}, {{ "%.4f"|format(location[1]) }}
+            <button class="update-location-btn" onclick="updateLocation()">Update Location</button>
+        </div>
+        
+        <!-- Current Weather -->
+        <div class="weather-card">
+            <div class="current-weather">
+                <div>
+                    <h2>Current Weather</h2>
+                    <div class="temp" id="temperature">{{ weather.temperature }}°C</div>
+                    <p>Humidity: <span id="humidity">{{ weather.humidity }}%</span></p>
+                    <p>Wind: <span id="wind">{{ weather.wind_speed }} m/s</span></p>
+                    <p>Precipitation: <span id="precip">{{ weather.precipitation }} mm</span></p>
+                </div>
+                <button class="refresh-btn" onclick="refreshWeather()">Refresh</button>
+            </div>
+        </div>
+        
+        <!-- Calendar Events (Next 3 Days) -->
+        <div class="events-section">
+            <h2>📅 Upcoming Events (Next 3 Days)</h2>
+            {% if events %}
+                {% for event in events %}
+                <div class="event-item">
+                    <strong>{{ event.summary }}</strong><br>
+                    <small>{{ event.datetime.strftime('%A, %B %d at %I:%M %p') }}</small><br>
+                    {% if event.location %}
+                    <small>📍 {{ event.location }}</small>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>No upcoming events</p>
+            {% endif %}
+        </div>
+        
+        <!-- Tasks (Next 2 Days) -->
+        <div class="tasks-section">
+            <h2>✅ Tasks (Due in 2 Days)</h2>
+            {% if tasks %}
+                {% for task in tasks %}
+                <div class="task-item">
+                    <strong>{{ task.title }}</strong><br>
+                    {% if task.due %}
+                    <small>Due: {{ task.due.strftime('%A, %B %d') }}</small>
+                    {% else %}
+                    <small>No due date</small>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>No tasks due soon</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script>
+        // Auto-refresh weather every 5 minutes
+        setInterval(refreshWeather, 300000);
+        
+        function refreshWeather() {
+            fetch('/api/weather/current')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('temperature').innerText = data.temperature + '°C';
+                    document.getElementById('humidity').innerText = data.humidity + '%';
+                    document.getElementById('wind').innerText = data.wind_speed + ' m/s';
+                    document.getElementById('precip').innerText = data.precipitation + ' mm';
+                });
+        }
+        
+        function updateLocation() {
+            if (!navigator.geolocation) {
+                alert("Geolocation is not supported by your browser");
+                return;
+            }
+            
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    fetch('/api/location/save', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert("Location updated! Refreshing page...");
+                        location.reload();
+                    });
+                },
+                function(error) {
+                    alert("Failed to get location: " + error.message);
+                }
+            );
+        }
+    </script>
+</body>
+</html>

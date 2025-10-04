@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Rain-E</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 40px; }
+        .container { max-width: 800px; margin: 0 auto; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; }
+        h1 { text-align: center; margin-bottom: 30px; }
+        h2 { margin-top: 30px; margin-bottom: 15px; font-size: 1.5em; }
+        label { display: block; margin-top: 15px; font-weight: bold; }
+        input[type="text"], input[type="number"], input[type="time"], select { width: 100%; padding: 10px; margin-top: 5px; border: none; border-radius: 5px; }
+        input[type="checkbox"] { margin-right: 10px; }
+        .checkbox-group { margin-top: 10px; }
+        button { padding: 15px 30px; margin-top: 30px; background: #4CAF50; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #45a049; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #fff; text-decoration: none; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Back to Dashboard</a>
+        <h1>⚙️ Settings</h1>
+        
+        <form method="POST">
+            <h2>Notification Preferences</h2>
+            
+            <label for="reminder_minutes">Event Reminder Time (minutes before):</label>
+            <input type="number" id="reminder_minutes" name="reminder_minutes" 
+                   value="{{ settings.event_reminder_minutes }}" min="5" max="60">
+            <small style="opacity: 0.8;">Get notified X minutes before each event/task</small>
+            
+            <label for="morning_time">Morning Summary Time:</label>
+            <input type="time" id="morning_time" name="morning_time" 
+                   value="{{ settings.morning_summary_time }}">
+            <small style="opacity: 0.8;">Daily weather briefing time</small>
+            
+            <div class="checkbox-group" style="margin-top: 20px;">
+                <input type="checkbox" id="notifications_enabled" name="notifications_enabled" 
+                       {% if settings.notifications_enabled %}checked{% endif %}>
+                <label for="notifications_enabled" style="display: inline;">Enable Desktop Notifications</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="sound_enabled" name="sound_enabled" 
+                       {% if settings.sound_enabled %}checked{% endif %}>
+                <label for="sound_enabled" style="display: inline;">Enable Notification Sounds</label>
+            </div>
+            
+            <h2>Profile Information</h2>
+            <p><strong>Name:</strong> {{ profile.name }}</p>
+            <p><strong>Location:</strong> {{ "%.4f"|format(location[0]) }}, {{ "%.4f"|format(location[1]) }}</p>
+            <p><strong>Temperature Range:</strong> {{ profile.preferences.temp_min }}°C - {{ profile.preferences.temp_max }}°C</p>
+            
+            <button type="submit">Save Settings</button>
+        </form>
+    </div>
+</body>
+</html>
