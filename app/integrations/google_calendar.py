@@ -4,6 +4,10 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 import os.path
 import pickle
+from dotenv import load_dotenv
+import os
+
+load_dotenv() # loads variables from .env file
 
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
@@ -16,7 +20,19 @@ def get_credentials():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+            # Build client config from environment variables
+            client_config = {
+                "web": {
+                    "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+                    "project_id": os.getenv("GOOGLE_PROJECT_ID"),
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "token_uri": "https://oauth2.googleapis.com/token",
+                    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                    "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+                    "redirect_uris": ["http://localhost:8080/"]
+                }
+            }
+            flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
             creds = flow.run_local_server(port=8080, redirect_uri_trailing_slash=False)
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
