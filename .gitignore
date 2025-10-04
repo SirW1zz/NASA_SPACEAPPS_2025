@@ -1,15 +1,12 @@
-# Google credentials
+# Secrets
 credentials.json
 token.pickle
+.env
 
 # Python artifacts
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
 
 # Virtual environment
 venv/
 .venv/
-
-git filter-branch --force --index-filter "git rm --cached --ignore-unmatch token.pickle" --prune-empty --tag-name-filter cat -- --all
