@@ -1,13 +1,16 @@
-def get_basic_forecast():
-    # Hardcoded forecast for testing Phase 1
-    return {"temperature": 25, "rain_start": "17:30", "rain_end": "18:30"}  # °C, rain window
+import meteomatics.api as api
+from datetime import datetime, timedelta
 
-def check_rain_during_activity(activity_time):
-    """
-    activity_time: string "HH:MM"
-    Returns True if activity overlaps hardcoded rain
-    """
-    rain_start = int(get_basic_forecast()['rain_start'].replace(":", ""))
-    rain_end = int(get_basic_forecast()['rain_end'].replace(":", ""))
-    act_time = int(activity_time.replace(":", ""))
-    return rain_start <= act_time <= rain_end
+METEOMATICS_USER = "jose_freddie"
+METEOMATICS_PASS = "z4btVV8cJhP6Ny0Oj5kH"
+
+def fetch_weather(lat, lon):
+    now = datetime.utcnow()
+    params = ["t_2m:C", "precip_1h:mm", "wind_speed_10m:ms", "relative_humidity_2m:p"]
+    df = api.query_time_series([(lat, lon)], now, now + timedelta(hours=1), timedelta(hours=1), params, METEOMATICS_USER, METEOMATICS_PASS)
+    return {
+        "temperature": float(df["t_2m:C"].values[0]),
+        "precipitation": float(df["precip_1h:mm"].values[0]),
+        "wind": float(df["wind_speed_10m:ms"].values[0]),
+        "humidity": float(df["relative_humidity_2m:p"].values[0])
+    }

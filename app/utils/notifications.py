@@ -1,7 +1,7 @@
-def send_alert(message):
-    """
-    Centralized notification function.
-    For Phase 2, it prints messages to CLI.
-    Later, it can be extended for desktop/mobile notifications.
-    """
-    print(message)
+from notifypy import Notify
+
+def send_notification(title, message):
+    notification = Notify()
+    notification.title = title
+    notification.message = message
+    notification.send()

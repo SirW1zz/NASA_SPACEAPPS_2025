@@ -1,14 +1,17 @@
-from backend import user, weather, storage
-from frontend import cli
+from app.ai.gemini_brain import get_advice
+from app.backend.user import UserProfile
+from app.backend.weather import fetch_weather
+from app.integrations.google_calendar import fetch_events
+from app.integrations.google_tasks import fetch_tasks
+from app.utils.notifications import send_notification
 
-def main():
-    print("=== Welcome to 'Will It Rain On My Parade' MVP ===")
+def run_phase3(user_data, lat, lon):
+    user = UserProfile(user_data)
+    weather = fetch_weather(lat, lon)
+    calendar_events = fetch_events()
+    tasks = fetch_tasks()
     
-    # Load existing users
-    storage.load_users()
+    advice = get_advice(user_data, weather, calendar_events, tasks)
     
-    # Run CLI
-    cli.run()
-
-if __name__ == "__main__":
-    main()
+    send_notification("Weather Parade Assistant", advice)
+    print(advice)
