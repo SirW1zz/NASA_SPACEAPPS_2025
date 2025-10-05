@@ -13,3 +13,7 @@ transformers
 torch
 scikit-learn
 geopy
+tensorflow
+keras
+numpy
+pandas

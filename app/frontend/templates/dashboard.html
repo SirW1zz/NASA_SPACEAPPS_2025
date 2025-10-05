@@ -5,23 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rain-E Weather Assistant</title>
     <style>
-        .tracking-indicator { 
-    position: fixed; 
-    bottom: 20px; 
-    right: 20px; 
-    background: rgba(76, 175, 80, 0.9); 
-    color: white; 
-    padding: 10px 20px; 
-    border-radius: 20px; 
-    font-size: 14px;
-    display: none;
-}
-.tracking-indicator.active { display: block; }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; }
-        h1 { text-align: center; margin-bottom: 30px; font-size: 2.5em; }
+        
+        /* Header with navigation */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-size: 2.5em; }
+        .nav-buttons { display: flex; gap: 15px; }
+        .nav-btn { background: rgba(255, 255, 255, 0.2); color: white; padding: 12px 24px; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; text-decoration: none; display: inline-block; transition: all 0.3s; }
+        .nav-btn:hover { background: rgba(255, 255, 255, 0.35); transform: translateY(-2px); }
+        .nav-btn.primary { background: #4CAF50; }
+        .nav-btn.primary:hover { background: #45a049; }
+        
         .location-info { text-align: center; margin-bottom: 20px; font-size: 0.9em; opacity: 0.8; }
         .weather-card { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 30px; margin-bottom: 20px; }
         .current-weather { display: flex; justify-content: space-between; align-items: center; }
@@ -32,11 +28,22 @@
         .refresh-btn:hover { background: #45a049; }
         .update-location-btn { background: #2196F3; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; margin-left: 10px; }
         .update-location-btn:hover { background: #0b7dda; }
+        
+        .tracking-indicator { position: fixed; bottom: 20px; right: 20px; background: rgba(76, 175, 80, 0.9); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; display: none; }
+        .tracking-indicator.active { display: block; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🌦️ Rain-E Weather Assistant</h1>
+        <!-- Navigation Header -->
+        <div class="header">
+            <h1>🌦️ Rain-E</h1>
+            <div class="nav-buttons">
+                <a href="/predict" class="nav-btn primary">🔮 Long-Term Forecast</a>
+                <a href="/settings" class="nav-btn">⚙️ Settings</a>
+            </div>
+        </div>
+        
         <p style="text-align: center; margin-bottom: 10px;">Welcome back, {{ profile.name }}!</p>
         <div class="location-info">
             📍 Location: {{ "%.4f"|format(location[0]) }}, {{ "%.4f"|format(location[1]) }}
@@ -95,6 +102,11 @@
         </div>
     </div>
     
+    <!-- Location Tracking Indicator -->
+    <div class="tracking-indicator" id="trackingIndicator">
+        📡 Location Tracking Active
+    </div>
+    
     <script>
         // Auto-refresh weather every 5 minutes
         setInterval(refreshWeather, 300000);
@@ -137,56 +149,57 @@
                 }
             );
         }
-           let watchID = null;
-    
-    function startLocationTracking() {
-        if (!navigator.geolocation) {
-            console.log("Geolocation not supported");
-            return;
+        
+        // Continuous location tracking
+        let watchID = null;
+        
+        function startLocationTracking() {
+            if (!navigator.geolocation) {
+                console.log("Geolocation not supported");
+                return;
+            }
+            
+            // Show tracking indicator
+            document.getElementById('trackingIndicator').classList.add('active');
+            
+            watchID = navigator.geolocation.watchPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+                    
+                    fetch('/api/location/track', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            latitude: lat,
+                            longitude: lon,
+                            accuracy: accuracy
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('📍 Location tracked:', data);
+                        
+                        if (data.predicted_destination) {
+                            console.log('🎯 Predicted destination:', data.predicted_destination);
+                        }
+                    });
+                },
+                function(error) {
+                    console.error('Location tracking error:', error);
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 30000,
+                    timeout: 27000
+                }
+            );
+            
+            console.log('✅ Location tracking started');
         }
         
-        // Track location continuously
-        watchID = navigator.geolocation.watchPosition(
-            function(position) {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                const accuracy = position.coords.accuracy;
-                
-                // Send to backend
-                fetch('/api/location/track', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        latitude: lat,
-                        longitude: lon,
-                        accuracy: accuracy
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('📍 Location tracked:', data);
-                    
-                    // Check if prediction available
-                    if (data.predicted_destination) {
-                        console.log('🎯 Predicted destination:', data.predicted_destination);
-                    }
-                });
-            },
-            function(error) {
-                console.error('Location tracking error:', error);
-            },
-            {
-                enableHighAccuracy: true,
-                maximumAge: 30000,  // 30 seconds
-                timeout: 27000
-            }
-        );
-        
-        console.log('✅ Location tracking started');
-    }
-    
-    // Start tracking when page loads
-    window.addEventListener('load', startLocationTracking);
+        window.addEventListener('load', startLocationTracking);
     </script>
 </body>
 </html>

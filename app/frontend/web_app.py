@@ -202,6 +202,32 @@ def analyze_patterns():
         "status": "success",
         "patterns": patterns
     })
-
+@app.route('/predict', methods=['GET', 'POST'])
+def predict():
+    """Long-term weather prediction page using NASA model."""
+    if request.method == 'POST':
+        try:
+            from app.ai.nasa_predictor import get_predictor
+            from datetime import datetime
+            
+            # Get user inputs
+            latitude = float(request.form.get('latitude'))
+            longitude = float(request.form.get('longitude'))
+            date_str = request.form.get('target_date')
+            target_date = datetime.strptime(date_str, '%Y-%m-%d')
+            
+            # Run prediction
+            predictor = get_predictor()
+            prediction = predictor.predict(latitude, longitude, target_date)
+            
+            return render_template('prediction_result.html', 
+                                 prediction=prediction,
+                                 latitude=latitude,
+                                 longitude=longitude)
+        
+        except Exception as e:
+            return render_template('predict.html', error=str(e))
+    
+    return render_template('predict.html')
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

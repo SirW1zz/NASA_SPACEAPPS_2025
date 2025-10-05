@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Prediction Results - Rain-E</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .back-link { color: white; text-decoration: none; font-size: 18px; }
+        .back-link:hover { text-decoration: underline; }
+        
+        h1 { text-align: center; margin-bottom: 10px; font-size: 2.5em; }
+        .subtitle { text-align: center; margin-bottom: 30px; opacity: 0.9; }
+        
+        .card { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 30px; margin-bottom: 20px; }
+        
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .metric-card { background: rgba(255, 255, 255, 0.15); padding: 20px; border-radius: 15px; text-align: center; }
+        .metric-value { font-size: 3em; font-weight: bold; margin: 10px 0; }
+        .metric-label { font-size: 1.1em; opacity: 0.9; }
+        .metric-icon { font-size: 2em; margin-bottom: 10px; }
+        
+        .probability-bar { width: 100%; height: 30px; background: rgba(0, 0, 0, 0.2); border-radius: 15px; overflow: hidden; margin-top: 10px; }
+        .probability-fill { height: 100%; background: linear-gradient(90deg, #4CAF50, #FFC107, #F44336); transition: width 0.5s; }
+        
+        .advice-section { background: rgba(255, 255, 255, 0.1); padding: 25px; border-radius: 15px; margin-top: 20px; }
+        .advice-item { background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 10px; margin-bottom: 15px; font-size: 1.1em; }
+        
+        .action-buttons { display: flex; gap: 15px; margin-top: 30px; }
+        .btn { flex: 1; padding: 15px; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; transition: all 0.3s; text-decoration: none; text-align: center; display: block; }
+        .btn-primary { background: #4CAF50; color: white; }
+        .btn-primary:hover { background: #45a049; }
+        .btn-secondary { background: rgba(255, 255, 255, 0.2); color: white; }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.3); }
+        
+        .historical-record { display: flex; justify-content: space-between; padding: 8px; background: rgba(255,255,255,0.1); margin-bottom: 5px; border-radius: 5px; }
+        .trend-indicator { display: inline-block; padding: 5px 10px; border-radius: 5px; background: rgba(255,255,255,0.2); margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/predict" class="back-link">← New Prediction</a>
+            <a href="/" class="back-link">Dashboard</a>
+        </div>
+        
+        <h1>🎯 Weather Prediction Results</h1>
+        <p class="subtitle">
+            Location: {{ "%.4f"|format(latitude) }}°, {{ "%.4f"|format(longitude) }}° | 
+            Date: {{ prediction.target_date }}
+        </p>
+        
+        <!-- Temperature & Conditions -->
+        <div class="card">
+            <h2 style="margin-bottom: 20px;">🌡️ Temperature Forecast</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">🌡️</div>
+                    <div class="metric-value">{{ prediction.temperature.average }}°C</div>
+                    <div class="metric-label">Average Temperature</div>
+                    {% if prediction.temperature.vs_historical is defined %}
+                    <span class="trend-indicator">
+                        {% if prediction.temperature.vs_historical > 0 %}🔺{% else %}🔻{% endif %}
+                        {{ prediction.temperature.vs_historical }}°C vs historical avg
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">🔥</div>
+                    <div class="metric-value">{{ prediction.temperature.heat_wave_probability }}%</div>
+                    <div class="metric-label">Heat Wave Risk</div>
+                    <div class="probability-bar">
+                        <div class="probability-fill" style="width: {{ prediction.temperature.heat_wave_probability }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">❄️</div>
+                    <div class="metric-value">{{ prediction.conditions.cold_snap_probability }}%</div>
+                    <div class="metric-label">Cold Snap Risk</div>
+                    <div class="probability-bar">
+                        <div class="probability-fill" style="width: {{ prediction.conditions.cold_snap_probability }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Precipitation -->
+        <div class="card">
+            <h2 style="margin-bottom: 20px;">💧 Precipitation Forecast</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">☔</div>
+                    <div class="metric-value">{{ prediction.precipitation.rain_probability }}%</div>
+                    <div class="metric-label">Rain Probability</div>
+                    <div class="probability-bar">
+                        <div class="probability-fill" style="width: {{ prediction.precipitation.rain_probability }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">🌨️</div>
+                    <div class="metric-value">{{ prediction.precipitation.snow_probability }}%</div>
+                    <div class="metric-label">Snow Probability</div>
+                    <div class="probability-bar">
+                        <div class="probability-fill" style="width: {{ prediction.precipitation.snow_probability }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">⛈️</div>
+                    <div class="metric-value">{{ prediction.precipitation.heavy_rain_probability }}%</div>
+                    <div class="metric-label">Heavy Rain Risk</div>
+                    <div class="probability-bar">
+                        <div class="probability-fill" style="width: {{ prediction.precipitation.heavy_rain_probability }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cloud Cover -->
+        <div class="card">
+            <h2 style="margin-bottom: 20px;">☁️ Sky Conditions</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">☁️</div>
+                    <div class="metric-value">{{ prediction.conditions.cloud_cover }}%</div>
+                    <div class="metric-label">Cloud Cover</div>
+                    <div class="probability-bar">
+                        <div class="probability-fill" style="width: {{ prediction.conditions.cloud_cover }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Historical Comparison (NEW!) -->
+        {% if prediction.historical_comparison %}
+        <div class="card">
+            <h2 style="margin-bottom: 20px;">📊 Historical Comparison</h2>
+            <p style="margin-bottom: 15px; opacity: 0.9;">Weather on this date over the past 5 years:</p>
+            
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">📈</div>
+                    <div class="metric-value">{{ prediction.historical_comparison.temperature_avg }}°C</div>
+                    <div class="metric-label">5-Year Average</div>
+                    <small style="opacity: 0.8; display: block; margin-top: 10px;">
+                        Range: {{ prediction.historical_comparison.temperature_min }}°C to {{ prediction.historical_comparison.temperature_max }}°C
+                    </small>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        {% if prediction.temperature.vs_historical > 0 %}🔺{% else %}🔻{% endif %}
+                    </div>
+                    <div class="metric-value">{{ prediction.temperature.vs_historical|abs }}°C</div>
+                    <div class="metric-label">{{ prediction.temperature.trend|capitalize }} than usual</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">☔</div>
+                    <div class="metric-value">{{ prediction.historical_comparison.rain_frequency }}%</div>
+                    <div class="metric-label">Historical Rain Frequency</div>
+                    <small style="opacity: 0.8; display: block; margin-top: 10px;">
+                        It rained on this date {{ prediction.historical_comparison.rain_frequency }}% of past years
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Historical Timeline -->
+            <div style="margin-top: 20px; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 10px;">
+                <h3 style="margin-bottom: 15px;">📅 Historical Records:</h3>
+                {% for record in prediction.historical_comparison.historical_records %}
+                <div class="historical-record">
+                    <span><strong>{{ record.year }}</strong></span>
+                    <span>🌡️ {{ record.temperature }}°C</span>
+                    <span>☔ {{ record.precipitation }}mm</span>
+                    <span>☁️ {{ record.cloud_cover }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Confidence Level (NEW!) -->
+        {% if prediction.confidence %}
+        <div class="card">
+            <h2 style="margin-bottom: 20px;">🎯 Prediction Confidence</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">✓</div>
+                    <div class="metric-value">{{ prediction.confidence.confidence_level }}%</div>
+                    <div class="metric-label">Overall Confidence</div>
+                    <small style="opacity: 0.8; display: block; margin-top: 10px;">
+                        <strong>Confidence Intervals:</strong><br>
+                        95% range: ±{{ "%.1f"|format(prediction.confidence.confidence_95_upper|abs) }}°C<br>
+                        80% range: ±{{ "%.1f"|format(prediction.confidence.confidence_80_upper|abs) }}°C
+                    </small>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">📊</div>
+                    <div style="text-align: left; font-size: 0.9em; opacity: 0.9;">
+                        <p style="margin-bottom: 10px;"><strong>What this means:</strong></p>
+                        <p style="margin-bottom: 8px;">• We are 95% confident the actual temperature will be within ±{{ "%.1f"|format(prediction.confidence.confidence_95_upper|abs) }}°C of {{ prediction.temperature.average }}°C</p>
+                        <p>• Based on historical variance and model accuracy</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Actionable Advice -->
+        <div class="card">
+            <h2 style="margin-bottom: 20px;">📋 Planning Recommendations</h2>
+            <div class="advice-section">
+                {% for advice in prediction.advice %}
+                <div class="advice-item">{{ advice }}</div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="/predict" class="btn btn-primary">🔮 Make Another Prediction</a>
+            <a href="/" class="btn btn-secondary">🏠 Back to Dashboard</a>
+        </div>
+    </div>
+    
+    <script>
+        // Animate probability bars on load
+        window.addEventListener('load', function() {
+            const bars = document.querySelectorAll('.probability-fill');
+            bars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>
