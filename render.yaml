@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: rain-e-weather
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app.frontend.web_app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: METEOMATICS_USERNAME
+        sync: false
+      - key: METEOMATICS_PASSWORD
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
