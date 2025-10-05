@@ -1,83 +1,44 @@
-import meteomatics.api as api
-from datetime import datetime, timedelta
+import os
 from typing import Dict, List
+from datetime import datetime
+import pandas as pd # Although we don't use it, keep if other parts of the original file needed it.
 
-METEOMATICS_USER = "jose_freddie"
-
-METEOMATICS_PASS = "z4btVV8cJhP6Ny0Oj5kH"
+# --- TEMPORARY MOCK DATA ---
+# This stable mock data ensures the app does not crash due to network errors 
+# and returns predictable results (15C and Sunny).
 
 def fetch_weather(lat: float, lon: float, target_datetime: datetime = None) -> Dict:
     """
-    Fetch weather for specific coordinates and time.
-    If target_datetime is None, uses current time.
+    Returns stable, mock weather data (15C and Sunny) to ensure the app doesn't crash.
     """
     if target_datetime is None:
         target_datetime = datetime.utcnow()
-    
-    try:
-        # Fetch weather parameters
-        params = [
-            "t_2m:C",              # Temperature
-            "precip_1h:mm",        # Precipitation
-            "wind_speed_10m:ms",   # Wind speed
-            "relative_humidity_2m:p",  # Humidity
-            "weather_symbol_1h:idx",   # Weather condition code
-            "uv:idx"               # UV index
-        ]
         
-        # Query for single timestamp
-        df = api.query_time_series(
-            [(lat, lon)], 
-            target_datetime, 
-            target_datetime + timedelta(hours=1), 
-            timedelta(hours=1), 
-            params, 
-            METEOMATICS_USER, 
-            METEOMATICS_PASS
-        )
-        
-        return {
-            "temperature": float(df["t_2m:C"].values[0]),
-            "precipitation": float(df["precip_1h:mm"].values[0]),
-            "wind_speed": float(df["wind_speed_10m:ms"].values[0]),
-            "humidity": float(df["relative_humidity_2m:p"].values[0]),
-            "weather_code": int(df["weather_symbol_1h:idx"].values[0]) if "weather_symbol_1h:idx" in df else 0,
-            "uv_index": float(df["uv:idx"].values[0]) if "uv:idx" in df else 0,
-            "timestamp": target_datetime.isoformat(),
-            "location": {"lat": lat, "lon": lon}
-        }
-    except Exception as e:
-        print(f"Weather fetch error for ({lat}, {lon}): {e}")
-        return {
-            "temperature": 0,
-            "precipitation": 0,
-            "wind_speed": 0,
-            "humidity": 0,
-            "weather_code": 0,
-            "uv_index": 0,
-            "error": str(e)
-        }
+    return {
+        "temperature": 15.0,
+        "precipitation": 0.0,
+        "wind_speed": 4.0,
+        "humidity": 65.0,
+        "weather_code": 1, # Sunny/Clear
+        "uv_index": 3.0,
+        "timestamp": target_datetime.isoformat(),
+        "location": {"lat": lat, "lon": lon},
+        "condition_description": "Sunny and 15°C (Mock Data)"
+    }
 
 def fetch_weather_for_events(events_with_locations: List[Dict]) -> List[Dict]:
     """
-    Fetch weather for multiple events with their locations and times.
-    events_with_locations format: [
-        {"event_name": "Dentist", "location": (lat, lon), "datetime": datetime_obj},
-        ...
-    ]
+    Returns mock weather data for multiple events.
     """
     weather_forecasts = []
-    
     for event in events_with_locations:
-        lat, lon = event['location']
-        event_time = event['datetime']
-        weather = fetch_weather(lat, lon, event_time)
+        # We reuse the single fetch_weather function for mock consistency
+        weather = fetch_weather(event['location'][0], event['location'][1], event['datetime'])
         
         weather_forecasts.append({
             "event_name": event['event_name'],
             "location_coords": event['location'],
-            "event_time": event_time.isoformat(),
+            "event_time": event['datetime'].isoformat() if isinstance(event['datetime'], datetime) else event['datetime'],
             "weather": weather
         })
-    
     return weather_forecasts
