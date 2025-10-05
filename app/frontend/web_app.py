@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask_cors import CORS
 from app.backend.weather import fetch_weather
 from app.integrations.google_calendar import fetch_events
 from app.integrations.google_tasks import fetch_tasks
@@ -11,6 +12,7 @@ from app.backend.scheduler import WeatherScheduler
 import os
 
 app = Flask(__name__)
+CORS(app)
 
 # Initialize and start background scheduler
 weather_scheduler = WeatherScheduler()
@@ -127,4 +129,4 @@ def settings():
     return render_template('settings.html', profile=profile, location=location, settings=settings_data)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(host='0.0.0.0', port=8080, debug=True)
