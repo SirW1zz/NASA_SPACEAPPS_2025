@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rain-E Weather Assistant</title>
     <style>
+        .tracking-indicator { 
+    position: fixed; 
+    bottom: 20px; 
+    right: 20px; 
+    background: rgba(76, 175, 80, 0.9); 
+    color: white; 
+    padding: 10px 20px; 
+    border-radius: 20px; 
+    font-size: 14px;
+    display: none;
+}
+.tracking-indicator.active { display: block; }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; }
@@ -124,6 +137,56 @@
                 }
             );
         }
+           let watchID = null;
+    
+    function startLocationTracking() {
+        if (!navigator.geolocation) {
+            console.log("Geolocation not supported");
+            return;
+        }
+        
+        // Track location continuously
+        watchID = navigator.geolocation.watchPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                const accuracy = position.coords.accuracy;
+                
+                // Send to backend
+                fetch('/api/location/track', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        latitude: lat,
+                        longitude: lon,
+                        accuracy: accuracy
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('📍 Location tracked:', data);
+                    
+                    // Check if prediction available
+                    if (data.predicted_destination) {
+                        console.log('🎯 Predicted destination:', data.predicted_destination);
+                    }
+                });
+            },
+            function(error) {
+                console.error('Location tracking error:', error);
+            },
+            {
+                enableHighAccuracy: true,
+                maximumAge: 30000,  // 30 seconds
+                timeout: 27000
+            }
+        );
+        
+        console.log('✅ Location tracking started');
+    }
+    
+    // Start tracking when page loads
+    window.addEventListener('load', startLocationTracking);
     </script>
 </body>
 </html>

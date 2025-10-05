@@ -126,5 +126,82 @@ def settings():
     
     return render_template('settings.html', profile=profile, location=location, settings=settings_data)
 
+@app.route('/api/location/track', methods=['POST'])
+def track_location():
+    """Track user location continuously and predict destination."""
+    from app.backend.location_tracker import LocationTracker
+    from app.backend.pattern_recognizer import PatternRecognizer
+    from app.backend.notification_manager import NotificationManager
+    
+    data = request.get_json()
+    lat = data.get('latitude')
+    lon = data.get('longitude')
+    accuracy = data.get('accuracy')
+    
+    if not lat or not lon:
+        return jsonify({"status": "error", "message": "Invalid data"}), 400
+    
+    # Save location to database
+    tracker = LocationTracker()
+    tracker.add_location(float(lat), float(lon), accuracy)
+    
+    # Check if we have enough data for pattern recognition
+    location_count = tracker.get_location_count()
+    
+    predicted_destination = None
+    
+    if location_count >= 20:  # Need at least 20 points for ML
+        # Run pattern recognition
+        recognizer = PatternRecognizer()
+        recognizer.cluster_locations()
+        
+        # Predict destination
+        predicted_destination = recognizer.predict_destination(float(lat), float(lon))
+        
+        # If destination predicted, send proactive weather alert
+        if predicted_destination:
+            dest_lat = predicted_destination['latitude']
+            dest_lon = predicted_destination['longitude']
+            dest_name = predicted_destination['name']
+            
+            # Fetch weather for destination
+            dest_weather = fetch_weather(dest_lat, dest_lon)
+            
+            # Check if weather is notably different
+            current_weather = fetch_weather(float(lat), float(lon))
+            temp_diff = abs(dest_weather['temperature'] - current_weather['temperature'])
+            precip_diff = dest_weather['precipitation'] - current_weather['precipitation']
+            
+            # Send notification if significant weather change
+            if temp_diff > 5 or precip_diff > 1:
+                notif_manager = NotificationManager()
+                message = f"Heading to {dest_name}?\nWeather: {dest_weather['temperature']}°C"
+                if dest_weather['precipitation'] > 0:
+                    message += f", {dest_weather['precipitation']}mm rain - bring umbrella!"
+                
+                notif_manager.send_notification(
+                    title=f"🎯 Weather Alert for {dest_name}",
+                    message=message
+                )
+    
+    return jsonify({
+        "status": "success",
+        "location_count": location_count,
+        "predicted_destination": predicted_destination
+    })
+
+@app.route('/api/patterns/analyze', methods=['POST'])
+def analyze_patterns():
+    """Manually trigger pattern recognition."""
+    from app.backend.pattern_recognizer import PatternRecognizer
+    
+    recognizer = PatternRecognizer()
+    patterns = recognizer.cluster_locations()
+    
+    return jsonify({
+        "status": "success",
+        "patterns": patterns
+    })
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

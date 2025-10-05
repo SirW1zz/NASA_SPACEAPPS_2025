@@ -9,3 +9,7 @@ python-dotenv
 flask
 APScheduler
 winotify
+transformers
+torch
+scikit-learn
+geopy
